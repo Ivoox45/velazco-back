@@ -1,0 +1,63 @@
+package com.velazco.velazco_back.service.impl;
+
+import com.velazco.velazco_back.dto.category.requests.CategoryCreateRequestDto;
+import com.velazco.velazco_back.dto.category.requests.CategoryUpdateRequestDto;
+import com.velazco.velazco_back.dto.category.responses.CategoryCreateResponseDto;
+import com.velazco.velazco_back.dto.category.responses.CategoryListResponseDto;
+import com.velazco.velazco_back.dto.category.responses.CategoryUpdateResponseDto;
+import com.velazco.velazco_back.model.Category;
+import com.velazco.velazco_back.mappers.CategoryMapper;
+import com.velazco.velazco_back.repositories.CategoryRepository;
+import com.velazco.velazco_back.service.CategoryService;
+
+import jakarta.persistence.EntityNotFoundException;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class CategoryServiceImpl implements CategoryService {
+
+  private final CategoryRepository categoryRepository;
+  private final CategoryMapper categoryMapper;
+
+  public CategoryServiceImpl(CategoryRepository categoryRepository, CategoryMapper categoryMapper) {
+    this.categoryRepository = categoryRepository;
+    this.categoryMapper = categoryMapper;
+  }
+
+  @Override
+  public Category getCategoryById(Long id) {
+    return categoryRepository.findById(id)
+        .orElseThrow(() -> new EntityNotFoundException("Category not found"));
+  }
+
+  @Override
+  public List<CategoryListResponseDto> getAllCategories() {
+    List<Category> categories = categoryRepository.findAll();
+    return categoryMapper.toListResponse(categories);
+  }
+
+  @Override
+  public CategoryCreateResponseDto createCategory(CategoryCreateRequestDto dto) {
+    Category category = categoryMapper.toEntity(dto);
+    Category saved = categoryRepository.save(category);
+    return categoryMapper.toCreateResponse(saved);
+  }
+
+  @Override
+  public CategoryUpdateResponseDto updateCategory(Long id, CategoryUpdateRequestDto dto) {
+    Category existing = getCategoryById(id);
+    Category category = categoryMapper.toEntity(dto);
+    category.setId(existing.getId());
+    Category updated = categoryRepository.save(category);
+    return categoryMapper.toUpdateResponse(updated);
+  }
+
+  @Override
+  public void deleteCategoryById(Long id) {
+    Category category = getCategoryById(id);
+    categoryRepository.delete(category);
+  }
+}

@@ -32,4 +32,6 @@ public interface ProductionService {
   ProductionStatusUpdateResponseDto cambiarEstadoPendienteAEnProceso(Long id, ProductionStatusUpdateRequestDto dto);
 
   ProductionFinalizeResponseDto finalizarProduccion(Long productionId, ProductionFinalizeRequestDto request);
+
+  public ProductionCreateResponseDto getProductionById(Long id);
 }

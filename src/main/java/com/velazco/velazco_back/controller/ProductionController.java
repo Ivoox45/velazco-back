@@ -44,6 +44,12 @@ public class ProductionController {
     return ResponseEntity.ok(response);
   }
 
+  @GetMapping("/{id}")
+  public ResponseEntity<ProductionCreateResponseDto> getProductionById(@PathVariable Long id) {
+    ProductionCreateResponseDto response = productionService.getProductionById(id);
+    return ResponseEntity.ok(response);
+  }
+
   @PostMapping
   public ResponseEntity<ProductionCreateResponseDto> createProduction(
       @AuthenticationPrincipal User user,

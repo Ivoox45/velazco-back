@@ -278,4 +278,9 @@ public class ProductionServiceImpl implements ProductionService {
         .build();
   }
 
+  public ProductionCreateResponseDto getProductionById(Long id) {
+    var production = productionRepository.findById(id)
+        .orElseThrow(() -> new RuntimeException("No se encontró la producción con ID: " + id));
+    return productionMapper.toCreateResponseDto(production);
+  }
 }

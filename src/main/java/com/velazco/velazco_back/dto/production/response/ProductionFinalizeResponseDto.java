@@ -8,16 +8,15 @@ import java.util.List;
 @Builder
 public class ProductionFinalizeResponseDto {
 
-    private Long productionId;
-    private String estadoFinal;
-    private List<ProductResult> productos;
+  private Long productionId;
+  private String estadoFinal;
+  private List<ProductResult> productos;
 
-    @Data
-    @Builder
-    public static class ProductResult {
-        private Long productId;
-        private Integer cantidadProducida;
-        private String motivo;
-        private boolean completo;
-    }
+  @Data
+  @Builder
+  public static class ProductResult {
+    private Long productId;
+    private Integer cantidadProducida;
+    private String motivo;
+  }
 }

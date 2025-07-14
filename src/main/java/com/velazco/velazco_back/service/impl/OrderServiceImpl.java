@@ -1,6 +1,8 @@
 package com.velazco.velazco_back.service.impl;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -13,10 +15,14 @@ import org.springframework.stereotype.Service;
 import com.velazco.velazco_back.dto.PaginatedResponseDto;
 import com.velazco.velazco_back.dto.order.responses.OrderListResponseDto;
 import com.velazco.velazco_back.dto.order.requests.OrderStartRequestDto;
+import com.velazco.velazco_back.dto.order.responses.DailySaleResponseDto;
 import com.velazco.velazco_back.dto.order.responses.DeliveredOrderResponseDto;
 import com.velazco.velazco_back.dto.order.responses.OrderConfirmDispatchResponseDto;
 import com.velazco.velazco_back.dto.order.responses.OrderConfirmSaleResponseDto;
 import com.velazco.velazco_back.dto.order.responses.OrderStartResponseDto;
+import com.velazco.velazco_back.dto.order.responses.PaymentMethodSummaryDto;
+import com.velazco.velazco_back.dto.order.responses.TopProductDto;
+import com.velazco.velazco_back.dto.order.responses.WeeklySaleResponseDto;
 import com.velazco.velazco_back.model.Dispatch;
 import com.velazco.velazco_back.model.Order;
 import com.velazco.velazco_back.model.OrderDetail;
@@ -197,34 +203,6 @@ public class OrderServiceImpl implements OrderService {
   }
 
   @Override
-  public PaginatedResponseDto<OrderListResponseDto> filterOrders(
-      String status,
-      Long orderId,
-      String clientName,
-      Pageable pageable) {
-
-    Order.OrderStatus orderStatus;
-    try {
-      orderStatus = Order.OrderStatus.valueOf(status.toUpperCase());
-    } catch (IllegalArgumentException e) {
-      throw new IllegalArgumentException("Estado inválido. Solo se permite PAGADO o ENTREGADO.");
-    }
-
-    if (orderStatus != Order.OrderStatus.PAGADO && orderStatus != Order.OrderStatus.ENTREGADO) {
-      throw new IllegalArgumentException("Estado inválido. Solo se permite PAGADO o ENTREGADO.");
-    }
-
-    Page<Order> orderPage = orderRepository.findByStatusAndOptionalFilters(orderStatus, orderId, clientName, pageable);
-
-    return PaginatedResponseDto.<OrderListResponseDto>builder()
-        .content(orderMapper.toListResponse(orderPage.getContent()))
-        .currentPage(orderPage.getNumber())
-        .totalItems(orderPage.getTotalElements())
-        .totalPages(orderPage.getTotalPages())
-        .build();
-  }
-
-  @Override
   public PaginatedResponseDto<DeliveredOrderResponseDto> getDeliveredOrders(Pageable pageable) {
     Page<Order> orderPage = orderRepository.findByStatus(Order.OrderStatus.ENTREGADO, pageable);
 
@@ -238,6 +216,160 @@ public class OrderServiceImpl implements OrderService {
         .totalItems(orderPage.getTotalElements())
         .totalPages(orderPage.getTotalPages())
         .build();
+  }
+
+  @Override
+  public List<DailySaleResponseDto> getDailySalesDetailed() {
+    List<Object[]> rawResults = orderRepository.findDetailedDeliveredSales();
+
+    Map<LocalDate, List<DailySaleResponseDto.ProductSold>> groupedProductsByDate = rawResults.stream()
+        .collect(Collectors.groupingBy(
+            row -> ((java.sql.Date) row[0]).toLocalDate(),
+            Collectors.mapping(row -> DailySaleResponseDto.ProductSold.builder()
+                .productName((String) row[1])
+                .quantitySold((Integer) row[2])
+                .unitPrice((BigDecimal) row[3])
+                .subtotal((BigDecimal) row[4])
+                .build(),
+                Collectors.toList())));
+    Map<LocalDate, Long> salesCountByDate = rawResults.stream()
+        .collect(Collectors.groupingBy(
+            row -> ((java.sql.Date) row[0]).toLocalDate(),
+            Collectors.mapping(row -> (Long) row[5], Collectors.toSet())))
+        .entrySet().stream()
+        .collect(Collectors.toMap(Map.Entry::getKey, entry -> (long) entry.getValue().size()));
+
+    // Construir lista de DTOs
+    return groupedProductsByDate.entrySet().stream()
+        .map(entry -> {
+          LocalDate date = entry.getKey();
+          List<DailySaleResponseDto.ProductSold> products = entry.getValue();
+
+          BigDecimal total = products.stream()
+              .map(DailySaleResponseDto.ProductSold::getSubtotal)
+              .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+          return DailySaleResponseDto.builder()
+              .date(date)
+              .totalSales(total)
+              .salesCount(salesCountByDate.getOrDefault(date, 0L).intValue())
+              .products(products)
+              .build();
+        })
+        .sorted((a, b) -> b.getDate().compareTo(a.getDate()))
+        .toList();
+  }
+
+  @Override
+  public List<WeeklySaleResponseDto> getWeeklySalesDetailed() {
+    List<Object[]> rows = orderRepository.findDeliveredOrderDetailsForWeek();
+
+    Map<LocalDate, List<Object[]>> groupedByWeekStart = rows.stream()
+        .collect(Collectors.groupingBy(row -> {
+          LocalDate deliveryDate = ((java.sql.Date) row[0]).toLocalDate();
+          return deliveryDate.minusDays(deliveryDate.getDayOfWeek().getValue() % 7);
+        }));
+
+    return groupedByWeekStart.entrySet().stream()
+        .map(weekEntry -> {
+          LocalDate start = weekEntry.getKey();
+          LocalDate end = start.plusDays(6);
+
+          Map<Long, List<Object[]>> ordersGrouped = weekEntry.getValue().stream()
+              .collect(Collectors.groupingBy(row -> ((Number) row[1]).longValue()));
+
+          List<WeeklySaleResponseDto.DeliveredOrder> deliveredOrders = ordersGrouped.entrySet().stream()
+              .map(orderEntry -> {
+                Long orderId = orderEntry.getKey();
+                List<Object[]> orderRows = orderEntry.getValue();
+
+                LocalDate deliveryDate = ((java.sql.Date) orderRows.get(0)[0]).toLocalDate();
+                String dayOfWeek = deliveryDate.getDayOfWeek().toString();
+
+                List<WeeklySaleResponseDto.ProductSold> products = orderRows.stream()
+                    .map(row -> WeeklySaleResponseDto.ProductSold.builder()
+                        .productName((String) row[2])
+                        .quantitySold((Integer) row[3])
+                        .unitPrice((BigDecimal) row[4])
+                        .subtotal((BigDecimal) row[5])
+                        .build())
+                    .toList();
+
+                BigDecimal orderTotal = products.stream()
+                    .map(WeeklySaleResponseDto.ProductSold::getSubtotal)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                return WeeklySaleResponseDto.DeliveredOrder.builder()
+                    .orderId(orderId)
+                    .deliveryDate(deliveryDate)
+                    .dayOfWeek(dayOfWeek)
+                    .orderTotal(orderTotal)
+                    .products(products)
+                    .build();
+              })
+              .toList();
+
+          BigDecimal totalSales = deliveredOrders.stream()
+              .map(WeeklySaleResponseDto.DeliveredOrder::getOrderTotal)
+              .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+          return WeeklySaleResponseDto.builder()
+              .startDate(start)
+              .endDate(end)
+              .totalSales(totalSales)
+              .salesCount(deliveredOrders.size())
+              .orders(deliveredOrders)
+              .build();
+        })
+        .sorted((a, b) -> b.getStartDate().compareTo(a.getStartDate()))
+        .toList();
+  }
+
+  @Override
+  public List<TopProductDto> getTopSellingProductsOfCurrentMonth() {
+    LocalDate now = LocalDate.now();
+    LocalDateTime startOfMonth = now.withDayOfMonth(1).atStartOfDay();
+    LocalDateTime endOfMonth = now.plusDays(1).atStartOfDay(); // para incluir el día de hoy
+
+    List<Object[]> results = orderRepository.findTopSellingProductsOfMonth(startOfMonth, endOfMonth);
+
+    return results.stream().map(row -> TopProductDto.builder()
+        .productName((String) row[0])
+        .totalQuantitySold(((Number) row[1]).intValue())
+        .totalRevenue((BigDecimal) row[2])
+        .build()).toList();
+  }
+
+  @Override
+  public List<PaymentMethodSummaryDto> getSalesByPaymentMethod() {
+    List<Sale> allSales = saleRepository.findAll(); // o usar un query con status ENTREGADO si es necesario
+
+    BigDecimal totalGlobal = allSales.stream()
+        .map(Sale::getTotalAmount)
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    Map<String, BigDecimal> totalByMethod = allSales.stream()
+        .collect(Collectors.groupingBy(
+            sale -> sale.getPaymentMethod().toUpperCase(),
+            Collectors.mapping(Sale::getTotalAmount,
+                Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))));
+
+    return totalByMethod.entrySet().stream()
+        .map(entry -> {
+          BigDecimal totalSales = entry.getValue();
+          double percentage = totalGlobal.compareTo(BigDecimal.ZERO) == 0
+              ? 0.0
+              : totalSales.multiply(BigDecimal.valueOf(100))
+                  .divide(totalGlobal, 2, RoundingMode.HALF_UP)
+                  .doubleValue();
+
+          return PaymentMethodSummaryDto.builder()
+              .paymentMethod(entry.getKey())
+              .totalSales(totalSales)
+              .percentage(percentage)
+              .build();
+        })
+        .toList();
   }
 
 }

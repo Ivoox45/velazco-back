@@ -6,6 +6,7 @@ import com.velazco.velazco_back.dto.product.requests.ProductCreateRequestDto;
 import com.velazco.velazco_back.dto.product.requests.ProductUpdateRequestDto;
 import com.velazco.velazco_back.dto.product.responses.ProductCreateResponseDto;
 import com.velazco.velazco_back.dto.product.responses.ProductListResponseDto;
+import com.velazco.velazco_back.dto.product.responses.ProductLowStockResponseDto;
 import com.velazco.velazco_back.dto.product.responses.ProductUpdateActiveResponseDto;
 import com.velazco.velazco_back.dto.product.responses.ProductUpdateResponseDto;
 
@@ -22,5 +23,7 @@ public interface ProductService {
   void deleteProductById(Long id);
 
   ProductUpdateActiveResponseDto updateProductActive(Long id, Boolean active);
+
+  ProductLowStockResponseDto getLowStockProducts();
 
 }

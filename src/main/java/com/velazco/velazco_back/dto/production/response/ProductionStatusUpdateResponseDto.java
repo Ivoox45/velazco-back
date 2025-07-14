@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 @Builder
 public class ProductionStatusUpdateResponseDto {
-    private Long id;
-    private String estadoAnterior;
-    private String estadoActual;
+  private Long id;
+  private String estadoAnterior;
+  private String estadoActual;
 }

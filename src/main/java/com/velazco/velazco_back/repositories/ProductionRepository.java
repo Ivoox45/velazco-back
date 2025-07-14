@@ -7,12 +7,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.velazco.velazco_back.model.Production;
 
 public interface ProductionRepository extends JpaRepository<Production, Long> {
-    List<Production> findProductionsByProductionDate(LocalDate date);
+  
+  List<Production> findProductionsByProductionDate(LocalDate date);
 
-    List<Production> findByStatusIn(List<Production.ProductionStatus> statuses);
+  List<Production> findByStatusIn(List<Production.ProductionStatus> statuses);
 
-    List<Production> findByStatus(Production.ProductionStatus status);
+  List<Production> findByStatus(Production.ProductionStatus status);
 
-    boolean existsByProductionDate(LocalDate productionDate);
+  boolean existsByProductionDate(LocalDate productionDate);
 
 }

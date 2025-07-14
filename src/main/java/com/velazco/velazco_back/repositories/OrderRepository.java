@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import com.velazco.velazco_back.model.Order;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
+
     @EntityGraph(attributePaths = { "details", "details.product", "attendedBy" })
     Page<Order> findByStatus(Order.OrderStatus status, Pageable pageable);
 
@@ -29,5 +30,52 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("orderId") Long orderId,
             @Param("clientName") String clientName,
             Pageable pageable);
+
+    @Query("""
+                SELECT
+                  DATE(o.date) AS saleDate,
+                  p.name AS productName,
+                  d.quantity AS quantity,
+                  d.unitPrice AS unitPrice,
+                  (d.quantity * d.unitPrice) AS subtotal,
+                  o.id AS orderId
+                FROM Order o
+                JOIN o.details d
+                JOIN d.product p
+                WHERE o.status = com.velazco.velazco_backend.entities.Order.OrderStatus.ENTREGADO
+            """)
+    List<Object[]> findDetailedDeliveredSales();
+
+    @Query("""
+                SELECT
+                  DATE(o.date) AS deliveryDate,
+                  o.id AS orderId,
+                  p.name AS productName,
+                  d.quantity AS quantity,
+                  d.unitPrice AS unitPrice,
+                  (d.quantity * d.unitPrice) AS subtotal
+                FROM Order o
+                JOIN o.details d
+                JOIN d.product p
+                WHERE o.status = com.velazco.velazco_backend.entities.Order.OrderStatus.ENTREGADO
+            """)
+    List<Object[]> findDeliveredOrderDetailsForWeek();
+
+    @Query("""
+                SELECT
+                    p.name,
+                    SUM(d.quantity),
+                    SUM(d.quantity * d.unitPrice)
+                FROM Order o
+                JOIN o.details d
+                JOIN d.product p
+                WHERE o.status = com.velazco.velazco_backend.entities.Order.OrderStatus.ENTREGADO
+                AND o.date BETWEEN :startOfMonth AND :endOfMonth
+                GROUP BY p.name
+                ORDER BY SUM(d.quantity) DESC
+            """)
+    List<Object[]> findTopSellingProductsOfMonth(
+            @Param("startOfMonth") LocalDateTime startOfMonth,
+            @Param("endOfMonth") LocalDateTime endOfMonth);
 
 }

@@ -9,6 +9,7 @@ import com.velazco.velazco_back.dto.product.requests.ProductCreateRequestDto;
 import com.velazco.velazco_back.dto.product.requests.ProductUpdateRequestDto;
 import com.velazco.velazco_back.dto.product.responses.ProductCreateResponseDto;
 import com.velazco.velazco_back.dto.product.responses.ProductListResponseDto;
+import com.velazco.velazco_back.dto.product.responses.ProductLowStockResponseDto;
 import com.velazco.velazco_back.dto.product.responses.ProductUpdateActiveResponseDto;
 import com.velazco.velazco_back.dto.product.responses.ProductUpdateResponseDto;
 import com.velazco.velazco_back.model.Product;
@@ -37,4 +38,7 @@ public interface ProductMapper {
   ProductUpdateResponseDto toUpdateResponse(Product product);
 
   ProductUpdateActiveResponseDto toUpdateActiveResponse(Product product);
+
+  List<ProductLowStockResponseDto.ProductData> toLowStockProductData(List<Product> products);
+
 }

@@ -14,6 +14,7 @@ import com.velazco.velazco_back.dto.product.requests.ProductCreateRequestDto;
 import com.velazco.velazco_back.dto.product.requests.ProductUpdateRequestDto;
 import com.velazco.velazco_back.dto.product.responses.ProductCreateResponseDto;
 import com.velazco.velazco_back.dto.product.responses.ProductListResponseDto;
+import com.velazco.velazco_back.dto.product.responses.ProductLowStockResponseDto;
 import com.velazco.velazco_back.dto.product.responses.ProductUpdateActiveResponseDto;
 import com.velazco.velazco_back.dto.product.responses.ProductUpdateResponseDto;
 import com.velazco.velazco_back.model.Category;
@@ -123,6 +124,13 @@ public class ProductServiceImpl implements ProductService {
     Product updated = productRepository.save(product);
 
     return productMapper.toUpdateActiveResponse(updated);
+  }
+
+  @Override
+  public ProductLowStockResponseDto getLowStockProducts() {
+    List<Product> products = productRepository.findLowStockProducts();
+    List<ProductLowStockResponseDto.ProductData> productData = productMapper.toLowStockProductData(products);
+    return new ProductLowStockResponseDto((long) productData.size(), productData);
   }
 
 }

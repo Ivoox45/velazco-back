@@ -9,6 +9,7 @@ import com.velazco.velazco_back.dto.production.response.ProductionDailyResponseD
 import com.velazco.velazco_back.dto.production.response.ProductionFinalizeResponseDto;
 import com.velazco.velazco_back.dto.production.response.ProductionHistoryResponseDto;
 import com.velazco.velazco_back.dto.production.response.ProductionPendingResponseDto;
+import com.velazco.velazco_back.dto.production.response.ProductionProcessResponseDto;
 import com.velazco.velazco_back.dto.production.response.ProductionStatusUpdateResponseDto;
 import com.velazco.velazco_back.dto.production.response.ProductionUpdateResponseDto;
 import com.velazco.velazco_back.mappers.ProductionMapper;
@@ -55,6 +56,18 @@ public class ProductionServiceImpl implements ProductionService {
       dto.setDetails(productionMapper.toDetailDtoPendingList(production.getDetails()));
       return dto;
     }).toList();
+  }
+
+  @Override
+  public List<ProductionProcessResponseDto> getProductionsInProcess() {
+    List<Production> inProcess = productionRepository.findByStatus(ProductionStatus.EN_PROCESO);
+    return inProcess.stream()
+        .map(production -> {
+          ProductionProcessResponseDto dto = productionMapper.toProcessDto(production);
+          dto.setDetails(productionMapper.toDetailDtoProcessList(production.getDetails()));
+          return dto;
+        })
+        .toList();
   }
 
   public List<ProductionHistoryResponseDto> getCompletedAndIncompleteOrders() {
@@ -188,7 +201,7 @@ public class ProductionServiceImpl implements ProductionService {
 
   @Override
   @Transactional
-  public ProductionStatusUpdateResponseDto cambiarEstadoPendienteAEnProceso(Long id,
+  public ProductionStatusUpdateResponseDto changePendingToInProcess(Long id,
       ProductionStatusUpdateRequestDto dto) {
     Production production = productionRepository.findById(id)
         .orElseThrow(() -> new EntityNotFoundException("Orden de producción no encontrada"));
@@ -214,7 +227,7 @@ public class ProductionServiceImpl implements ProductionService {
 
   @Override
   @Transactional
-  public ProductionFinalizeResponseDto finalizarProduccion(Long productionId, ProductionFinalizeRequestDto request) {
+  public ProductionFinalizeResponseDto finalizeProduction(Long productionId, ProductionFinalizeRequestDto request) {
     Production production = productionRepository.findById(productionId)
         .orElseThrow(() -> new EntityNotFoundException("Producción no encontrada"));
 
@@ -246,41 +259,29 @@ public class ProductionServiceImpl implements ProductionService {
         detail.setComments(null); // Limpia comentarios si está completo
       }
 
+      // 👉 ACTUALIZAR STOCK INDIVIDUALMENTE
+      Product product = detail.getProduct();
+      int nuevoStock = product.getStock() + detail.getProducedQuantity();
+      product.setStock(nuevoStock);
+      productRepository.save(product);
+
       resultados.add(ProductionFinalizeResponseDto.ProductResult.builder()
           .productId(dto.getProductId())
           .cantidadProducida(dto.getProducedQuantity())
           .motivo(dto.getMotivoIncompleto())
-          .completo(completo)
           .build());
     }
 
-    if (todosCompletos) {
-      production.setStatus(ProductionStatus.COMPLETO);
-
-      // Actualiza el stock
-      for (ProductionDetail detail : production.getDetails()) {
-        Product product = detail.getProduct();
-        int nuevoStock = product.getStock() + detail.getProducedQuantity();
-        product.setStock(nuevoStock);
-        productRepository.save(product);
-      }
-
-    } else {
-      production.setStatus(ProductionStatus.INCOMPLETO);
-    }
-
+    // 👉 SI TODOS CUMPLIERON, COMPLETO; SINO, INCOMPLETO
+    production.setStatus(todosCompletos ? ProductionStatus.COMPLETO : ProductionStatus.INCOMPLETO);
     productionRepository.save(production);
 
-    return ProductionFinalizeResponseDto.builder()
+    ProductionFinalizeResponseDto response = ProductionFinalizeResponseDto.builder()
         .productionId(production.getId())
         .estadoFinal(production.getStatus().name())
         .productos(resultados)
         .build();
-  }
 
-  public ProductionCreateResponseDto getProductionById(Long id) {
-    var production = productionRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("No se encontró la producción con ID: " + id));
-    return productionMapper.toCreateResponseDto(production);
+    return response;
   }
 }

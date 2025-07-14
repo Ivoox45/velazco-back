@@ -16,48 +16,48 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ProductionDailyResponseDto {
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class AssignedByDto {
-        private Long id;
-        private String name;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class AssignedToDto {
-        private Long id;
-        private String name;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class ProductDto {
-        private Long id;
-        private String name;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class DetailDto {
-        private ProductDto product;
-        private Integer requestedQuantity;
-        private Integer producedQuantity;
-    }
-
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  @Builder
+  public static class AssignedByDto {
     private Long id;
-    private LocalDate productionDate;
-    private ProductionStatus status;
-    private AssignedByDto assignedBy;
-    private AssignedToDto assignedTo;
-    private String comments; 
-    private List<DetailDto> details;
+    private String name;
+  }
+
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  @Builder
+  public static class AssignedToDto {
+    private Long id;
+    private String name;
+  }
+
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  @Builder
+  public static class ProductDto {
+    private Long id;
+    private String name;
+  }
+
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  @Builder
+  public static class DetailDto {
+    private ProductDto product;
+    private Integer requestedQuantity;
+    private Integer producedQuantity;
+  }
+
+  private Long id;
+  private LocalDate productionDate;
+  private ProductionStatus status;
+  private AssignedByDto assignedBy;
+  private AssignedToDto assignedTo;
+  private String comments;
+  private List<DetailDto> details;
 }

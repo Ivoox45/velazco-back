@@ -1,5 +1,6 @@
 package com.velazco.velazco_back.dto.user.request;
 
+import io.micrometer.common.lang.Nullable;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -23,6 +24,7 @@ public class UserUpdateRequestDto {
   private String email;
 
   @Size(min = 6, message = "La contraseña debe tener al menos 6 caracteres")
+  @Nullable
   private String password;
 
   @NotNull(message = "El estado activo no puede ser nulo")

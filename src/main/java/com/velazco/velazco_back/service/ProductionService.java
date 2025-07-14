@@ -11,27 +11,27 @@ import com.velazco.velazco_back.dto.production.response.ProductionDailyResponseD
 import com.velazco.velazco_back.dto.production.response.ProductionFinalizeResponseDto;
 import com.velazco.velazco_back.dto.production.response.ProductionHistoryResponseDto;
 import com.velazco.velazco_back.dto.production.response.ProductionPendingResponseDto;
+import com.velazco.velazco_back.dto.production.response.ProductionProcessResponseDto;
 import com.velazco.velazco_back.dto.production.response.ProductionStatusUpdateResponseDto;
 import com.velazco.velazco_back.dto.production.response.ProductionUpdateResponseDto;
 import com.velazco.velazco_back.model.User;
 
 public interface ProductionService {
-  public List<ProductionPendingResponseDto> getPendingProductions();
+  List<ProductionPendingResponseDto> getPendingProductions();
+
+  List<ProductionProcessResponseDto> getProductionsInProcess();
 
   ProductionCreateResponseDto createProduction(ProductionCreateRequestDto request, User assignedBy);
 
   void deleteProductionById(Long productionId);
 
-  ProductionUpdateResponseDto updateProduction(Long productionId, ProductionUpdateRequestDto request,
-      User updatedBy);
+  ProductionUpdateResponseDto updateProduction(Long productionId, ProductionUpdateRequestDto request, User updatedBy);
 
   List<ProductionDailyResponseDto> getDailyProductions();
 
   List<ProductionHistoryResponseDto> getCompletedAndIncompleteOrders();
 
-  ProductionStatusUpdateResponseDto cambiarEstadoPendienteAEnProceso(Long id, ProductionStatusUpdateRequestDto dto);
+  ProductionStatusUpdateResponseDto changePendingToInProcess(Long id, ProductionStatusUpdateRequestDto request);
 
-  ProductionFinalizeResponseDto finalizarProduccion(Long productionId, ProductionFinalizeRequestDto request);
-
-  public ProductionCreateResponseDto getProductionById(Long id);
+  ProductionFinalizeResponseDto finalizeProduction(Long productionId, ProductionFinalizeRequestDto request);
 }

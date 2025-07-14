@@ -220,7 +220,7 @@ public class OrderServiceImpl implements OrderService {
 
   @Override
   public List<DailySaleResponseDto> getDailySalesDetailed() {
-    List<Object[]> rawResults = orderRepository.findDetailedDeliveredSales();
+    List<Object[]> rawResults = orderRepository.findDetailedDeliveredSales(Order.OrderStatus.ENTREGADO);
 
     Map<LocalDate, List<DailySaleResponseDto.ProductSold>> groupedProductsByDate = rawResults.stream()
         .collect(Collectors.groupingBy(
@@ -262,7 +262,7 @@ public class OrderServiceImpl implements OrderService {
 
   @Override
   public List<WeeklySaleResponseDto> getWeeklySalesDetailed() {
-    List<Object[]> rows = orderRepository.findDeliveredOrderDetailsForWeek();
+    List<Object[]> rows = orderRepository.findDeliveredOrderDetailsForWeek(Order.OrderStatus.ENTREGADO);
 
     Map<LocalDate, List<Object[]>> groupedByWeekStart = rows.stream()
         .collect(Collectors.groupingBy(row -> {
@@ -331,7 +331,10 @@ public class OrderServiceImpl implements OrderService {
     LocalDateTime startOfMonth = now.withDayOfMonth(1).atStartOfDay();
     LocalDateTime endOfMonth = now.plusDays(1).atStartOfDay(); // para incluir el día de hoy
 
-    List<Object[]> results = orderRepository.findTopSellingProductsOfMonth(startOfMonth, endOfMonth);
+    List<Object[]> results = orderRepository.findTopSellingProductsOfMonth(
+        Order.OrderStatus.ENTREGADO,
+        startOfMonth,
+        endOfMonth);
 
     return results.stream().map(row -> TopProductDto.builder()
         .productName((String) row[0])

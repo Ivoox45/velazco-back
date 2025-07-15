@@ -14,6 +14,7 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
                  SUM(s.totalAmount) as monto,
                  COALESCE(AVG(s.totalAmount),0) as promedio
           FROM Sale s
+          WHERE s.cashier.role.id = 2
           GROUP BY s.cashier.id, s.cashier.name
           ORDER BY monto DESC
       """)

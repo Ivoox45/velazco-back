@@ -37,7 +37,6 @@ public class AreaRankingResponseDto {
     public static class CajeroRankingDto {
         private Long id;
         private String nombre;
-        private Integer pedidos;
         private Integer ventas;
         private Double total;
     }
@@ -50,8 +49,6 @@ public class AreaRankingResponseDto {
         private Long id;
         private String nombre;
         private Integer entregas;
-        private Double puntualidad;
-        private Integer distancia;
     }
 
     @Data

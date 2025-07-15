@@ -80,13 +80,15 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
       @Param("endOfMonth") LocalDateTime endOfMonth);
 
   @Query("""
-          SELECT o.attendedBy.id, o.attendedBy.name, COUNT(o.id) as pedidos,
+          SELECT o.attendedBy.id, o.attendedBy.name,
                  SUM(CASE WHEN o.status = 'PAGADO' THEN 1 ELSE 0 END) as ventas,
                  COALESCE(SUM(od.unitPrice * od.quantity),0) as total
           FROM Order o
           JOIN o.details od
+          WHERE o.attendedBy.role.id = 3
           GROUP BY o.attendedBy.id, o.attendedBy.name
-          ORDER BY pedidos DESC
+          ORDER BY ventas DESC
       """)
   List<Object[]> findTopCajeros();
+
 }

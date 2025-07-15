@@ -12,23 +12,18 @@ import java.util.List;
 public interface RankingMapper {
     RankingMapper INSTANCE = Mappers.getMapper(RankingMapper.class);
 
-    // Mapper para VendedorRankingDto
     AreaRankingResponseDto.VendedorRankingDto toVendedorRankingDto(
             Long id, String nombre, Integer ventas, Double monto, Double promedio);
 
-    // Mapper para CajeroRankingDto
     AreaRankingResponseDto.CajeroRankingDto toCajeroRankingDto(
-            Long id, String nombre, Integer pedidos, Integer ventas, Double total);
+            Long id, String nombre, Integer ventas, Double total);
 
-    // Mapper para EntregaRankingDto
     AreaRankingResponseDto.EntregaRankingDto toEntregaRankingDto(
-            Long id, String nombre, Integer entregas, Double puntualidad, Integer distancia);
+            Long id, String nombre, Integer entregas);
 
-    // Mapper para ProduccionRankingDto
     AreaRankingResponseDto.ProduccionRankingDto toProduccionRankingDto(
             Long id, String nombre, Integer ordenes, Integer unidades, Double eficiencia);
 
-    // Mapper para el DTO principal
     @Mapping(target = "vendedores", source = "vendedores")
     @Mapping(target = "cajeros", source = "cajeros")
     @Mapping(target = "entregas", source = "entregas")

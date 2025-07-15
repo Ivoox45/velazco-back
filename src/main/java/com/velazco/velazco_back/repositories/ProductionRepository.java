@@ -27,9 +27,11 @@ public interface ProductionRepository extends JpaRepository<Production, Long> {
                  ), 0) as eficiencia
           FROM Production p
           JOIN p.details pd
-          WHERE p.status = 'COMPLETO' OR p.status = 'INCOMPLETO'
+          WHERE (p.status = 'COMPLETO' OR p.status = 'INCOMPLETO')
+            AND p.assignedTo.role.id = 4
           GROUP BY p.assignedTo.id, p.assignedTo.name
           ORDER BY eficiencia DESC
       """)
   List<Object[]> findTopProductores();
+
 }

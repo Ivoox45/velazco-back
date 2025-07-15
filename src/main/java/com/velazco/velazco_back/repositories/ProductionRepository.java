@@ -19,19 +19,23 @@ public interface ProductionRepository extends JpaRepository<Production, Long> {
   boolean existsByProductionDate(LocalDate productionDate);
 
   @Query("""
-          SELECT p.assignedTo.id, p.assignedTo.name, COUNT(p.id) as ordenes,
+          SELECT p.assignedTo.id, p.assignedTo.name,
+                 COUNT(p.id) as ordenes,
                  COALESCE(SUM(pd.producedQuantity), 0) as unidades,
                  COALESCE(AVG(
-                   CASE WHEN pd.producedQuantity >= pd.requestedQuantity THEN 100.0
-                        ELSE (pd.producedQuantity * 100.0 / NULLIF(pd.requestedQuantity,0)) END
+                      CASE WHEN pd.requestedQuantity = 0 THEN 0
+                           ELSE (pd.producedQuantity * 100.0 / pd.requestedQuantity)
+                      END
                  ), 0) as eficiencia
           FROM Production p
           JOIN p.details pd
           WHERE (p.status = 'COMPLETO' OR p.status = 'INCOMPLETO')
             AND p.assignedTo.role.id = 4
+            AND MONTH(p.productionDate) = MONTH(CURRENT_DATE)
+            AND YEAR(p.productionDate) = YEAR(CURRENT_DATE)
           GROUP BY p.assignedTo.id, p.assignedTo.name
           ORDER BY eficiencia DESC
       """)
-  List<Object[]> findTopProductores();
+  List<Object[]> findTopProductoresDelMes();
 
 }

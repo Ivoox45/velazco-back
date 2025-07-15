@@ -80,15 +80,32 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
       @Param("endOfMonth") LocalDateTime endOfMonth);
 
   @Query("""
+          SELECT o.attendedBy.id, o.attendedBy.name, COUNT(o.id) as ventas,
+                 COALESCE(SUM(od.unitPrice * od.quantity),0) as monto
+          FROM Order o
+          JOIN o.details od
+          WHERE o.attendedBy.role.id = 2
+            AND o.status = 'ENTREGADO'
+            AND MONTH(o.date) = MONTH(CURRENT_DATE)
+            AND YEAR(o.date) = YEAR(CURRENT_DATE)
+          GROUP BY o.attendedBy.id, o.attendedBy.name
+          ORDER BY monto DESC
+      """)
+  List<Object[]> findTopVendedoresDelMes();
+
+  @Query("""
           SELECT o.attendedBy.id, o.attendedBy.name,
-                 SUM(CASE WHEN o.status = 'PAGADO' THEN 1 ELSE 0 END) as ventas,
-                 COALESCE(SUM(od.unitPrice * od.quantity),0) as total
+                 COUNT(o.id) as ventas,
+                 COALESCE(SUM(od.unitPrice * od.quantity), 0) as total
           FROM Order o
           JOIN o.details od
           WHERE o.attendedBy.role.id = 3
+            AND o.status = 'ENTREGADO'
+            AND MONTH(o.date) = MONTH(CURRENT_DATE)
+            AND YEAR(o.date) = YEAR(CURRENT_DATE)
           GROUP BY o.attendedBy.id, o.attendedBy.name
-          ORDER BY ventas DESC
+          ORDER BY total DESC
       """)
-  List<Object[]> findTopCajeros();
+  List<Object[]> findTopCajerosDelMes();
 
 }

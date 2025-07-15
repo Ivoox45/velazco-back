@@ -1,7 +1,18 @@
 package com.velazco.velazco_back.service;
 
-import com.velazco.velazco_back.dto.ranking.response.AreaRankingResponseDto;
+import java.util.List;
+
+import com.velazco.velazco_back.dto.ranking.response.CajeroRankingDto;
+import com.velazco.velazco_back.dto.ranking.response.EntregaRankingDto;
+import com.velazco.velazco_back.dto.ranking.response.ProduccionRankingDto;
+import com.velazco.velazco_back.dto.ranking.response.VendedorMesRankingDto;
 
 public interface RankingService {
-    AreaRankingResponseDto getAllRankings();
+    List<VendedorMesRankingDto> getTopVendedoresDelMes();
+
+    List<CajeroRankingDto> getCajerosDelMes();
+
+    List<EntregaRankingDto> getEntregadoresDelMes();
+
+    List<ProduccionRankingDto> getProduccionDelMes();
 }

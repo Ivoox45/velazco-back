@@ -12,10 +12,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 public class CorsConfig {
 
-  @Value("${frontend.url}")
+  @Value("${frontend.url:http://localhost:5173}")
   private String frontendUrl;
 
-  @Value("${base.url}")
+  @Value("${base.url:http://localhost:8080}")
   private String baseUrl;
 
   @Bean
